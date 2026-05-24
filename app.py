@@ -46,6 +46,9 @@ def load_model():
         print(f"    Expected: {VECTORIZER_PATH}")
         return False
 
+# Load model at startup for production WSGI servers (like Gunicorn on Render)
+load_model()
+
 
 def preprocess_text(text):
     """Clean and preprocess email text (must match training preprocessing)."""
@@ -134,8 +137,8 @@ def predict():
         "safe_probability": round(safe_prob, 4),
     }
 
-    label = "⚠️  PHISHING" if prediction == 1 else "✅ SAFE"
-    print(f"[{label}] Confidence: {confidence:.2%} | Text preview: {email_text[:80]}...")
+    label = "[PHISHING]" if prediction == 1 else "[SAFE]"
+    print(f"{label} Confidence: {confidence:.2%} | Text preview: {email_text[:80]}...")
 
     return jsonify(result)
 
@@ -184,8 +187,8 @@ if __name__ == "__main__":
     print("=" * 50)
     print("  PHISHING EMAIL DETECTOR API")
     print("=" * 50)
-
-    if load_model():
+    
+    if model is not None:
         print("[*] Starting Flask server on http://localhost:5000")
         app.run(host="0.0.0.0", port=5000, debug=True)
     else:
